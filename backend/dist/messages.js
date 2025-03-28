@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.CLUE_INPUT = exports.UPDATE_TEAM_ROLE = exports.WINNER = exports.UPDATE_GAME_STATE = exports.ROOM_ERROR = exports.NAME_ERROR = exports.SET_NAME = exports.LEAVE_ROOM = exports.JOIN_ROOM = exports.CREATE_ROOM = void 0;
+exports.CREATE_ROOM = "create-room";
+exports.JOIN_ROOM = "join-room";
+exports.LEAVE_ROOM = "leave-room";
+exports.SET_NAME = "set-name";
+exports.NAME_ERROR = "name-error";
+exports.ROOM_ERROR = "room-error";
+exports.UPDATE_GAME_STATE = "updateGameState";
+exports.WINNER = "winner";
+exports.UPDATE_TEAM_ROLE = "updateTeamAndRole";
+exports.CLUE_INPUT = "clueInput";

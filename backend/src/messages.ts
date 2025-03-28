@@ -1,0 +1,10 @@
+export const CREATE_ROOM = "create-room";
+export const JOIN_ROOM = "join-room";
+export const LEAVE_ROOM = "leave-room";
+export const SET_NAME = "set-name";
+export const NAME_ERROR = "name-error";
+export const ROOM_ERROR = "room-error";
+export const UPDATE_GAME_STATE = "updateGameState";
+export const WINNER = "winner";
+export const UPDATE_TEAM_ROLE = "updateTeamAndRole";
+export const CLUE_INPUT = "clueInput";
