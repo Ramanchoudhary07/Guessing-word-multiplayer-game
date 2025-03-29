@@ -4,6 +4,7 @@ import {
   CLUE_INPUT,
   JOIN_ROOM,
   NAME_ERROR,
+  RESET_GAME,
   SET_NAME,
   UPDATE_GAME_STATE,
   UPDATE_TEAM_ROLE,
@@ -23,25 +24,6 @@ export class RoomManager {
   addUser(user: User) {
     this.users.push(user);
     this.addHandler(user);
-    // user.socket.once("message", (data) => {
-    //   const nicknameFromData = JSON.parse(data.toString()).nickname;
-    //   if (nicknameFromData) {
-    //     this.users.filter((user) => {
-    //       if (user.nickname === nicknameFromData) {
-    //         user.socket.send(
-    //           JSON.stringify({
-    //             type: "error",
-    //             payload: { message: "Nickname already taken" },
-    //           })
-    //         );
-    //         user.socket.close();
-    //         return;
-    //       }
-    //       user.nickname = nicknameFromData;
-    //     });
-    //   }
-    //   console.log(`${user.nickname} is connected`);
-    // });
   }
 
   addHandler(user: User) {
@@ -118,6 +100,15 @@ export class RoomManager {
         );
         if (room) {
           room.updateWinner(user, message.payload.winner);
+        }
+      }
+
+      if (message.type === RESET_GAME) {
+        const room = this.rooms.find(
+          (room) => room.code === message.payload.code
+        );
+        if (room) {
+          room.resetGame(user, message.payload.gameState);
         }
       }
     });

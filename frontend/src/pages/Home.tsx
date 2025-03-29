@@ -10,7 +10,7 @@ interface RoomFormState {
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
-  const { setRoomCode } = useZustand();
+  const { setRoomCode, setHost } = useZustand();
   const [formState, setFormState] = useState<RoomFormState>({
     showJoinForm: false,
     roomCode: "",
@@ -19,6 +19,7 @@ const Home: React.FC = () => {
   const handleCreateRoom = () => {
     const newCode = Math.random().toString(36).substring(6);
     setRoomCode(newCode);
+    setHost(true);
     console.log("creating new room with random generated code: ", newCode);
     navigate(`/room/${newCode}`);
   };

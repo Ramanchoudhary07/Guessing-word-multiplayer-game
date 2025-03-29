@@ -47,8 +47,6 @@ export class Room {
         payload: { code: this.code, user: user.nickname },
       })
     );
-
-    // user.socket.send(JSON.stringify({ user: user.nickname }));
   }
 
   addUser(user: User) {
@@ -58,6 +56,7 @@ export class Room {
         type: JOIN_ROOM,
         payload: {
           gameState: this.gameState,
+          winner: this.winner,
         },
       })
     );
@@ -139,11 +138,6 @@ export class Room {
     this.gameState.clueWord = clueWord;
     this.gameState.clueNumber = clueNumber;
     this.gameState.gameLog = gameLog;
-    console.log(
-      "from room, clue input",
-      this.gameState.gameLog,
-      this.gameState.clueWord
-    );
 
     this.users.map((u) => {
       if (u != user) {
@@ -170,6 +164,23 @@ export class Room {
             type: "winner",
             payload: {
               winner: this.winner,
+            },
+          })
+        );
+      }
+    });
+  }
+
+  resetGame(user: User, gameState: GameState) {
+    this.gameState = gameState;
+    this.winner = "";
+    this.users.map((u) => {
+      if (u != user) {
+        u.socket.send(
+          JSON.stringify({
+            type: "resetGame",
+            payload: {
+              gameState: this.gameState,
             },
           })
         );

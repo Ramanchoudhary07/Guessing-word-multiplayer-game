@@ -8,3 +8,4 @@ export const UPDATE_GAME_STATE = "updateGameState";
 export const WINNER = "winner";
 export const UPDATE_TEAM_ROLE = "updateTeamAndRole";
 export const CLUE_INPUT = "clueInput";
+export const RESET_GAME = "resetGame";

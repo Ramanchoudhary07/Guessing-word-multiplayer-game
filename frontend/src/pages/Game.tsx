@@ -39,7 +39,7 @@ type SelectedCard = {
 
 const Game = () => {
   const socket = useSocket();
-  const { nickname, roomCode, setUsers } = useZustand();
+  const { nickname, roomCode, setUsers, host } = useZustand();
 
   useEffect(() => {
     if (!socket) return;
@@ -65,6 +65,7 @@ const Game = () => {
         case "join-room":
           console.log(data.payload.gameState);
           setGameState(data.payload.gameState);
+          setWinner(data.payload.winner);
           break;
         //-----------------------------------------------------------------------------------
         case "updateGameState":
@@ -86,7 +87,7 @@ const Game = () => {
           break;
         //-----------------------------------------------------------------------------------
         case "winner":
-          SetWinner(data.payload.winner);
+          setWinner(data.payload.winner);
           break;
         //-----------------------------------------------------------------------------------
         case "updateTeamAndRole":
@@ -112,6 +113,21 @@ const Game = () => {
             clueNumber: data.payload.clueNumber,
             gameLog: data.payload.gameLog,
           }));
+          break;
+        //-----------------------------------------------------------------------------------
+        case "resetGame":
+          setGameState(data.payload.gameState);
+          setWinner((prev) => {
+            prev = "";
+            return prev;
+          });
+          setUserRole("");
+          setUserTeam("");
+          setClueInput("");
+          setClueNumberInput(0);
+          setSelectedCardNumber(1);
+          setToggleCard(false);
+          setTeamSelected(false);
           break;
         //-----------------------------------------------------------------------------------
       }
@@ -141,7 +157,7 @@ const Game = () => {
   const [clueInput, setClueInput] = useState<string>("");
   const [clueNumberInput, setClueNumberInput] = useState<number>(0);
   const [teamSelected, setTeamSelected] = useState<boolean>(false);
-  const [winner, SetWinner] = useState<string>("");
+  const [winner, setWinner] = useState<string>("");
 
   const handleGiveClue = () => {
     if (clueInput.trim() === "" || clueNumberInput <= 0) return;
@@ -198,29 +214,7 @@ const Game = () => {
     setToggleCard(!toggleCard);
   };
 
-  useEffect(() => {
-    if (socket) {
-      socket.send(
-        JSON.stringify({
-          type: "winner",
-          payload: {
-            code: roomCode,
-            winner,
-          },
-        })
-      );
-    }
-  }, [winner]);
-
   const handleCardClick = (index: number) => {
-    console.log(
-      "from handleCardClick",
-      userRole,
-      userTeam,
-      gameState.turn,
-      gameState.clueWord
-    );
-
     if (userRole === "spymaster") return; // Spymasters can't reveal cards
     if (userTeam === "blue" && gameState.turn === "red") return;
     if (userTeam === "red" && gameState.turn === "blue") return;
@@ -228,7 +222,23 @@ const Game = () => {
 
     if (gameState.words[selectedCard.index].team === "black") {
       const newWinner = userTeam === "blue" ? "red" : "blue";
-      SetWinner(newWinner);
+      setWinner((prev) => {
+        prev = newWinner;
+
+        if (socket) {
+          socket.send(
+            JSON.stringify({
+              type: "winner",
+              payload: {
+                code: roomCode,
+                winner: newWinner,
+              },
+            })
+          );
+        }
+
+        return prev;
+      });
       return;
     }
 
@@ -249,14 +259,43 @@ const Game = () => {
         if (userTeam === "blue") {
           const newScore = updatedGameState.blueScore - 1;
           if (newScore === 0) {
-            SetWinner(userTeam);
+            setWinner((prev) => {
+              prev = userTeam;
+              if (socket) {
+                socket.send(
+                  JSON.stringify({
+                    type: "winner",
+                    payload: {
+                      code: roomCode,
+                      winner: userTeam,
+                    },
+                  })
+                );
+              }
+
+              return prev;
+            });
             return updatedGameState;
           }
           updatedGameState.blueScore = newScore;
         } else {
           const newScore = gameState.redScore - 1;
           if (newScore === 0) {
-            SetWinner(userTeam);
+            setWinner((prev) => {
+              prev = userTeam;
+              if (socket) {
+                socket.send(
+                  JSON.stringify({
+                    type: "winner",
+                    payload: {
+                      code: roomCode,
+                      winner: userTeam,
+                    },
+                  })
+                );
+              }
+              return prev;
+            });
             return updatedGameState;
           }
           updatedGameState.redScore = newScore;
@@ -265,19 +304,30 @@ const Game = () => {
 
       setToggleCard(!toggleCard);
       setSelectedCardNumber(selectedCardNumber + 1);
-      console.log("selectedCardNumber: ", selectedCardNumber);
 
       if (
         selectedCardNumber >= updatedGameState.clueNumber ||
         updatedGameState.words[selectedCard.index].team != userTeam
       ) {
-        console.log("inside Turn change case");
-
         if (userTeam == "blue") {
           if (gameState.words[selectedCard.index].team == "red") {
             const newScore = updatedGameState.redScore - 1;
             if (newScore === 0) {
-              SetWinner("red");
+              setWinner((prev) => {
+                prev = "red";
+                if (socket) {
+                  socket.send(
+                    JSON.stringify({
+                      type: "winner",
+                      payload: {
+                        code: roomCode,
+                        winner: "red",
+                      },
+                    })
+                  );
+                }
+                return prev;
+              });
               return updatedGameState;
             }
             updatedGameState.redScore = newScore;
@@ -286,7 +336,21 @@ const Game = () => {
           if (gameState.words[selectedCard.index].team == "blue") {
             const newScore = updatedGameState.blueScore - 1;
             if (newScore === 0) {
-              SetWinner("blue");
+              setWinner((prev) => {
+                prev = "blue";
+                if (socket) {
+                  socket.send(
+                    JSON.stringify({
+                      type: "winner",
+                      payload: {
+                        code: roomCode,
+                        winner: "blue",
+                      },
+                    })
+                  );
+                }
+                return prev;
+              });
               return updatedGameState;
             }
             updatedGameState.blueScore = newScore;
@@ -397,13 +461,62 @@ const Game = () => {
     setTeamSelected(true);
   };
 
+  const handleResetGame = () => {
+    setGameState((prev) => {
+      const updatedGameState = { ...prev };
+      updatedGameState.words = getWordsList();
+      updatedGameState.redScore = 8;
+      updatedGameState.blueScore = 9;
+      updatedGameState.turn = "blue";
+      updatedGameState.clueWord = "Clue";
+      updatedGameState.clueNumber = 0;
+      updatedGameState.gameLog = [];
+      updatedGameState.redTeam.spymaster = "";
+      updatedGameState.redTeam.operatives = [];
+      updatedGameState.blueTeam.spymaster = "";
+      updatedGameState.blueTeam.operatives = [];
+
+      setWinner("");
+      setUserRole("");
+      setUserTeam("");
+      setClueInput("");
+      setClueNumberInput(0);
+      setSelectedCardNumber(1);
+      setToggleCard(false);
+      setTeamSelected(false);
+
+      if (socket) {
+        socket.send(
+          JSON.stringify({
+            type: "resetGame",
+            payload: {
+              code: roomCode,
+              gameState: updatedGameState,
+            },
+          })
+        );
+      }
+
+      return updatedGameState;
+    });
+  };
+
   if (winner) {
     return (
       <div
-        className="max-w-7xl mx-auto p-4 border-2 border-gray-800 rounded-lg text-white 
-      flex items-center justify-center"
+        className="max-w-full h-full m-10 p-4 border-2 border-gray-800 rounded-lg text-white 
+      flex items-center justify-center flex-col gap-4"
       >
-        <div className="bg-gray-800 text-2xl p-2">{winner} team is winner</div>;
+        <div className="bg-white text-black rounded-lg text-2xl p-2">
+          {winner} team is winner
+        </div>
+        {host ? (
+          <div className="bg-[#FEE401] border rounded-lg p-2 text-black font-bold">
+            <button onClick={handleResetGame}>Reset Game</button>
+          </div>
+        ) : (
+          <div> wait for your host to reset the game </div>
+        )}
       </div>
     );
   }

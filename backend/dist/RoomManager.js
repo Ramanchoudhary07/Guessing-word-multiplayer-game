@@ -11,29 +11,11 @@ class RoomManager {
     addUser(user) {
         this.users.push(user);
         this.addHandler(user);
-        // user.socket.once("message", (data) => {
-        //   const nicknameFromData = JSON.parse(data.toString()).nickname;
-        //   if (nicknameFromData) {
-        //     this.users.filter((user) => {
-        //       if (user.nickname === nicknameFromData) {
-        //         user.socket.send(
-        //           JSON.stringify({
-        //             type: "error",
-        //             payload: { message: "Nickname already taken" },
-        //           })
-        //         );
-        //         user.socket.close();
-        //         return;
-        //       }
-        //       user.nickname = nicknameFromData;
-        //     });
-        //   }
-        //   console.log(`${user.nickname} is connected`);
-        // });
     }
     addHandler(user) {
         user.socket.on("message", (data) => {
             const message = JSON.parse(data.toString());
+            console.log(`Received message: ${message.type}`);
             if (message.type === messages_1.SET_NAME) {
                 const nicknameFromData = message.payload.nickname;
                 if (nicknameFromData) {
@@ -55,7 +37,7 @@ class RoomManager {
             if (message.type === messages_1.UPDATE_GAME_STATE) {
                 const room = this.rooms.find((room) => room.code === message.payload.code);
                 if (room) {
-                    room.updateState(user, message.payload.cardIndex, message.payload.redScore, message.payload.blueScore, message.payload.turn, message.payload.gameLog);
+                    room.updateState(user, message.payload.cardIndex, message.payload.redScore, message.payload.blueScore, message.payload.turn, message.payload.gameLog, message.payload.clueWord, message.payload.clueNumber);
                 }
             }
             if (message.type === messages_1.UPDATE_TEAM_ROLE) {
@@ -74,6 +56,14 @@ class RoomManager {
                 const room = this.rooms.find((room) => room.code === message.payload.code);
                 if (room) {
                     room.updateWinner(user, message.payload.winner);
+                }
+            }
+            if (message.type === messages_1.RESET_GAME) {
+                console.log("control reached reset game");
+                console.log("user", user.nickname);
+                const room = this.rooms.find((room) => room.code === message.payload.code);
+                if (room) {
+                    room.resetGame(user, message.payload.gameState);
                 }
             }
         });

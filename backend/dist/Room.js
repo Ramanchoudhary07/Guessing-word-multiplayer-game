@@ -13,7 +13,6 @@ class Room {
             type: messages_1.CREATE_ROOM,
             payload: { code: this.code, user: user.nickname },
         }));
-        // user.socket.send(JSON.stringify({ user: user.nickname }));
     }
     addUser(user) {
         this.users.push(user);
@@ -21,15 +20,18 @@ class Room {
             type: messages_1.JOIN_ROOM,
             payload: {
                 gameState: this.gameState,
+                winner: this.winner,
             },
         }));
     }
-    updateState(user, cardIndex, redScore, blueScore, turn, gameLog) {
+    updateState(user, cardIndex, redScore, blueScore, turn, gameLog, clueWord, clueNumber) {
         this.gameState.words[cardIndex].revealed = true;
         this.gameState.redScore = redScore;
         this.gameState.blueScore = blueScore;
         this.gameState.turn = turn;
         this.gameState.gameLog = gameLog;
+        this.gameState.clueWord = clueWord;
+        this.gameState.clueNumber = clueNumber;
         this.users.map((u) => {
             if (u != user) {
                 u.socket.send(JSON.stringify({
@@ -40,6 +42,8 @@ class Room {
                         blueScore: this.gameState.blueScore,
                         turn: this.gameState.turn,
                         gameLog: this.gameState.gameLog,
+                        clueWord: this.gameState.clueWord,
+                        clueNumber: this.gameState.clueNumber,
                     },
                 }));
             }
@@ -78,7 +82,6 @@ class Room {
         this.gameState.clueWord = clueWord;
         this.gameState.clueNumber = clueNumber;
         this.gameState.gameLog = gameLog;
-        console.log("from room, clue input", this.gameState.gameLog, this.gameState.clueWord);
         this.users.map((u) => {
             if (u != user) {
                 u.socket.send(JSON.stringify({
@@ -100,6 +103,20 @@ class Room {
                     type: "winner",
                     payload: {
                         winner: this.winner,
+                    },
+                }));
+            }
+        });
+    }
+    resetGame(user, gameState) {
+        this.gameState = gameState;
+        this.winner = "";
+        this.users.map((u) => {
+            if (u != user) {
+                u.socket.send(JSON.stringify({
+                    type: "resetGame",
+                    payload: {
+                        gameState: this.gameState,
                     },
                 }));
             }

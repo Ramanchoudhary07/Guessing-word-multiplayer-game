@@ -9,6 +9,8 @@ interface UserStore {
   setUsers: (users: string[]) => void;
   roomCode: string;
   setRoomCode: (roomCode: string) => void;
+  host: boolean;
+  setHost: (host: boolean) => void;
 }
 
 const useZustand = create<UserStore>((set) => ({
@@ -20,6 +22,8 @@ const useZustand = create<UserStore>((set) => ({
   setUsers: (users: string[]) => set({ users }),
   roomCode: "",
   setRoomCode: (roomCode: string) => set({ roomCode }),
+  host: false,
+  setHost: (host: boolean) => set({ host }),
 }));
 
 export default useZustand;
